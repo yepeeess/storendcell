@@ -1,0 +1,14 @@
+﻿{
+    "archivos":  [
+                     "app.js",
+                     "bifor.js",
+                     "BIFOR2026.json",
+                     "index-js.html",
+                     "index.html",
+                     "styles.css"
+                 ],
+    "descripcion":  "BIFOR 2026 OPTIMIZADO MOVIL - Menu lateral, rendimiento, espacio, config, musica, animaciones. Negro predominante.",
+    "nombre":  "BIFOR2026",
+    "version":  "2.0-movil",
+    "fecha":  "2026-08-25 15:22:37"
+}
