@@ -496,3 +496,16 @@ button, .nav-btn, .side-link{touch-action:manipulation; min-height:44px}
 }
 /* Performance: lazy paint containment */
 .view{contain: layout style paint}
+/* RANKING LIVE - usuarios reales */
+.live-user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;margin-bottom:8px;border:1px solid var(--border);background:var(--card2)}
+.live-user-card.playing{border-color:var(--green-light);background:linear-gradient(135deg, #141414, #0e3b2e)}
+.live-user-card.online{border-color:var(--turquoise);background:var(--card)}
+.live-user-avatar{width:36px;height:36px;border-radius:50%;background:var(--green-light);color:var(--black);display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0}
+.live-user-info{flex:1;min-width:0}
+.live-user-info small{word-break:break-all}
+.live-user-badge{text-align:right;flex-shrink:0}
+.playing-row{background:rgba(142,209,82,.08) !important}
+#qrCanvas{cursor:pointer;transition:transform .2s, box-shadow .2s; border:2px solid var(--border)}
+#qrCanvas:hover{transform:scale(1.03); box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.live-sections{margin:16px 0}
+@media(max-width:768px){.live-sections{grid-template-columns:1fr !important}}

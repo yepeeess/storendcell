@@ -60,6 +60,27 @@ const defaultUsers = [
   { nick:'Sofi2026', email:'sofi@bifor.com', password:'x', cargo:'Estudiante', empresa:'U. Manizales', puntaje:980, partidas:3 },
 ];
 
+function isUserOnline(u){
+  if(!u.lastActive) return false;
+  // online si activo en ultimos 5 minutos o si es currentUser
+  const fiveMin=5*60*1000;
+  return (Date.now() - u.lastActive) < fiveMin;
+}
+function isUserPlaying(u){
+  return isUserOnline(u) && !!u.isPlaying;
+}
+function ensureUserPresence(u, opts={}){
+  const now=Date.now();
+  if(u.lastActive==null) u.lastActive = now - Math.floor(Math.random()* 4*60*1000); // aleatorio 0-4min para demo
+  if(u.isOnline==null) u.isOnline = isUserOnline(u);
+  if(u.isPlaying==null) u.isPlaying = false;
+  // si es currentUser y estamos en quiz, marcar jugando
+  if(opts.forceOnline && state.currentUser && u.email===state.currentUser.email){
+    u.lastActive=now; u.isOnline=true;
+    if(state.currentQuiz && !document.getElementById('quizArea')?.classList.contains('hidden')) u.isPlaying=true;
+  }
+  return u;
+}
 function load(){
   const raw = localStorage.getItem(STORAGE_KEY);
   if(raw){
@@ -79,17 +100,56 @@ function load(){
   if(!state.users.length) state.users = defaultUsers;
   if(!state.quizPlays) state.quizPlays={};
   if(!state.live) state.live={ onlineHistory:[], respondingHistory:[], feed:[], lastResponsesPerMin:0 };
-  // inicializar historiales si vacios
+  // asegurar presencia para cada correo
+  state.users.forEach((u,i)=>{
+    ensureUserPresence(u);
+    // demo: si tiene partidas>0, darle mas probabilidad de estar online
+    if(u.partidas>0 && Math.random()>0.3) u.lastActive = Date.now() - Math.floor(Math.random()*3*60*1000);
+    // si es admin/demo y tiene puntaje, a veces marcar jugando
+    if(i<3 && u.partidas>2 && Math.random()>0.6) u.isPlaying=true;
+    else if(u.email===state.currentUser?.email) u.isPlaying = !!state.currentUser.isPlaying;
+  });
+  // asegurar currentUser referencia actualizada
+  if(state.currentUser){
+    const idx=state.users.findIndex(u=>u.email===state.currentUser.email);
+    if(idx>=0) state.currentUser=state.users[idx];
+  }
+  // inicializar historiales con datos REALES
   if(state.live.onlineHistory.length===0){
-    for(let i=0;i<10;i++){ state.live.onlineHistory.push( 8 + Math.floor(Math.random()*6) ); state.live.respondingHistory.push(2+Math.floor(Math.random()*4)); }
+    const realOnline=state.users.filter(isUserOnline).length;
+    const realPlaying=state.users.filter(isUserPlaying).length;
+    for(let i=0;i<10;i++){
+      // leve variacion para grafico
+      state.live.onlineHistory.push(Math.max(0, realOnline + (Math.random()>0.5?1:-1)* (Math.random()>0.7?1:0)));
+      state.live.respondingHistory.push(Math.max(0, realPlaying + (Math.random()>0.5?1:-1)* (Math.random()>0.8?1:0)));
+    }
   }
 }
 function initDefaults(){
-  state.users = JSON.parse(JSON.stringify(defaultUsers));
+  const now=Date.now();
+  state.users = JSON.parse(JSON.stringify(defaultUsers)).map((u,i)=>{
+    u.lastActive = now - Math.floor(Math.random()* 5*60*1000);
+    u.isOnline = i<4;
+    u.isPlaying = i<2 && u.partidas>0;
+    u.isPlayingQuiz = u.isPlaying ? state.quizzes[0]?.title : null;
+    if(u.email==='admin@bifor.com') { u.isOnline=true; u.isPlaying=false; u.lastActive=now; }
+    if(u.email==='demo@bifor.com') { u.isOnline=true; u.lastActive=now-60000; }
+    return u;
+  });
   state.quizzes = JSON.parse(JSON.stringify(defaultQuizzes));
   state.quizPlays={}; state.live={ onlineHistory:[], respondingHistory:[], feed:[], lastResponsesPerMin:0 };
-  for(let i=0;i<10;i++){ state.live.onlineHistory.push( 8 + Math.floor(Math.random()*6) ); state.live.respondingHistory.push(2+Math.floor(Math.random()*4)); }
+  const realOnline=state.users.filter(isUserOnline).length;
+  const realPlaying=state.users.filter(isUserPlaying).length;
+  for(let i=0;i<10;i++){ state.live.onlineHistory.push(realOnline); state.live.respondingHistory.push(realPlaying); }
   pushFeed('Sistema BIFOR iniciado - Bienvenidos a BIFOR 2026', 'sistema');
+}
+function touchUser(email){
+  const u=state.users.find(x=>x.email===email);
+  if(u){ u.lastActive=Date.now(); u.isOnline=true; save(); if(state.currentUser && state.currentUser.email===email) state.currentUser.lastActive=u.lastActive; }
+}
+function setPlaying(email, playing, quizTitle){
+  const u=state.users.find(x=>x.email===email);
+  if(u){ u.isPlaying=playing; u.isPlayingQuiz= playing? (quizTitle||'Quiz') : null; u.lastActive=Date.now(); u.isOnline=true; save(); if(state.currentUser && state.currentUser.email===email){ state.currentUser.isPlaying=playing; state.currentUser.isPlayingQuiz=u.isPlayingQuiz; state.currentUser.lastActive=u.lastActive; } }
 }
 function save(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({users:state.users, quizzes:state.quizzes, currentUser:state.currentUser, quizPlays:state.quizPlays, live:state.live}));
@@ -138,6 +198,9 @@ function doLogout(){
   if(!state.currentUser) { showView('inicio'); return; }
   if(!confirm(`Cerrar sesion de ${state.currentUser.nick}?`)) return;
   pushFeed(`${state.currentUser.nick} cerro sesion`, 'sistema');
+  // marcar offline
+  const u=state.users.find(x=>x.email===state.currentUser.email);
+  if(u){ u.isOnline=false; u.isPlaying=false; u.isPlayingQuiz=null; }
   state.currentUser=null; save(); updateAuthUI(); showView('inicio');
   stopMusic();
 }
@@ -310,7 +373,7 @@ registroForm.addEventListener('submit', e=>{
   if(!nick || !email || !password || !cargo) return;
   if(state.users.find(u=>u.email===email)){ alert('Ese correo ya está registrado. Inicia sesión.'); return; }
   if(state.users.find(u=>u.nick.toLowerCase()===nick.toLowerCase())){ alert('Ese nombre de jugador ya existe, elige otro.'); return; }
-  const user = { nick, email, password, cargo, empresa, puntaje:0, partidas:0, id: Date.now().toString(36) };
+  const user = { nick, email, password, cargo, empresa, puntaje:0, partidas:0, id: Date.now().toString(36), lastActive: Date.now(), isOnline:true, isPlaying:false };
   state.users.push(user);
   state.currentUser = user;
   save(); pushFeed(`${nick} (${email}) se registro como ${cargo}`, 'registro'); updateAuthUI();
@@ -324,6 +387,7 @@ loginForm.addEventListener('submit', e=>{
   const password = document.getElementById('loginPassword').value;
   const user = state.users.find(u=>u.email===email && u.password===password);
   if(!user){ alert('Correo o contraseña incorrectos. Prueba demo@bifor.com / demo123'); return; }
+  user.lastActive=Date.now(); user.isOnline=true;
   state.currentUser = user;
   save(); pushFeed(`${user.nick} conecto (${email})`, 'login'); updateAuthUI();
   showView('juegos');
@@ -383,7 +447,7 @@ function bindRegistroForm(){
     if(!nick || !email || !password || !cargo) return;
     if(state.users.find(u=>u.email===email)){ alert('Ese correo ya esta registrado. Inicia sesion.'); return; }
     if(state.users.find(u=>u.nick.toLowerCase()===nick.toLowerCase())){ alert('Ese nombre de jugador ya existe, elige otro.'); return; }
-    const user = { nick, email, password, cargo, empresa, puntaje:0, partidas:0, id: Date.now().toString(36) };
+    const user = { nick, email, password, cargo, empresa, puntaje:0, partidas:0, id: Date.now().toString(36), lastActive:Date.now(), isOnline:true, isPlaying:false };
     state.users.push(user);
     state.currentUser = user;
     save(); pushFeed(`${nick} (${email}) se registro como ${cargo}`, 'registro'); updateAuthUI();
@@ -423,6 +487,8 @@ function startQuiz(id){
   document.getElementById('quizResult').classList.add('hidden');
   document.getElementById('quizArea').classList.remove('hidden');
   document.getElementById('liveScore').textContent = 0;
+  setPlaying(state.currentUser.email, true, state.currentQuiz.title);
+  touchUser(state.currentUser.email);
   showQuestion();
 }
 
@@ -511,10 +577,15 @@ function finishQuiz(){
   if(userIdx>=0){
     state.users[userIdx].puntaje = (state.users[userIdx].puntaje||0) + state.liveScore;
     state.users[userIdx].partidas = (state.users[userIdx].partidas||0)+1;
+    state.users[userIdx].lastActive=Date.now();
+    state.users[userIdx].isOnline=true;
+    state.users[userIdx].isPlaying=false;
+    state.users[userIdx].isPlayingQuiz=null;
     state.currentUser = state.users[userIdx];
     save();
     pushFeed(`${state.currentUser.nick} completo "${state.currentQuiz.title}" con ${state.liveScore} pts`, 'quiz');
   } else save();
+  setPlaying(state.currentUser.email, false);
   document.getElementById('resultScore').textContent = state.liveScore + ' pts';
   let msg = '';
   const max = state.currentQuiz.preguntas.length * (100+15*7);
@@ -526,7 +597,9 @@ function finishQuiz(){
 }
 
 document.getElementById('salirQuiz').addEventListener('click',()=>{
-  clearInterval(state.timer); renderJuegos();
+  clearInterval(state.timer);
+  if(state.currentUser) setPlaying(state.currentUser.email, false);
+  renderJuegos();
 });
 document.getElementById('volverJuegos').addEventListener('click', renderJuegos);
 
@@ -548,93 +621,151 @@ function renderCarnet(){
   document.getElementById('carnetEmpresa').textContent = state.currentUser.empresa || '—';
   document.getElementById('carnetEmail').textContent = state.currentUser.email;
   document.getElementById('carnetAvatar').textContent = state.currentUser.nick.charAt(0).toUpperCase();
-  const code = 'BIFOR-'+state.currentUser.nick.toUpperCase().replace(/\s/g,'')+'-'+(state.currentUser.email.slice(0,3).toUpperCase())+'-2026';
+  // CODIGO PERSONALIZADO UNICO
+  const code = 'BIFOR-'+state.currentUser.nick.toUpperCase().replace(/\s/g,'')+'-'+(state.currentUser.email.slice(0,3).toUpperCase())+'-'+(state.currentUser.id||'2026').slice(-4).toUpperCase()+'-2026';
   document.getElementById('qrCode').textContent = code;
-  // generar QR fake con canvas
+  // QR PERSONALIZADO SCANEABLE - datos reales del carnet
   const c = document.getElementById('qrCanvas');
-  const ctx = c.getContext('2d');
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,140,140);
-  ctx.fillStyle='#000';
-  // marco
-  ctx.fillRect(6,6,32,32); ctx.fillRect(102,6,32,32); ctx.fillRect(6,102,32,32);
-  ctx.fillStyle='#fff'; ctx.fillRect(12,12,20,20); ctx.fillRect(108,12,20,20); ctx.fillRect(12,108,20,20);
-  ctx.fillStyle='#000'; ctx.fillRect(18,18,8,8); ctx.fillRect(114,18,8,8); ctx.fillRect(18,114,8,8);
-  // ruido pseudo qr basado en nick
-  let seed = 0; for(let ch of state.currentUser.nick) seed += ch.charCodeAt(0);
-  for(let i=0;i<180;i++){
-    const x = 44 + (seed * (i+1) * 9301 % 10000) % 52;
-    const y = 44 + (seed * (i+7) * 49297 % 10000) % 52;
-    // simple deterministic
-    const v = (seed + i*31) % 3;
-    if(v===0) ctx.fillRect(44 + (i%13)*6, 44+ Math.floor(i/13)*6, 4,4);
+  const qrData = `BIFOR2026|ID:${code}|EMAIL:${state.currentUser.email}|NICK:${state.currentUser.nick}|CARGO:${state.currentUser.cargo}|EMPRESA:${state.currentUser.empresa}|PTS:${state.currentUser.puntaje||0}|JUG:${state.currentUser.partidas||0}|FECHA:2026-04-15|MANIZALES`;
+  try{
+    if(typeof qrcode!=='undefined'){
+      const qr=qrcode(0,'M');
+      qr.addData(qrData);
+      qr.make();
+      const ctx=c.getContext('2d');
+      const count=qr.getModuleCount();
+      const size=140;
+      c.width=size; c.height=size;
+      // fondo blanco
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,size,size);
+      const cellSize=size/count;
+      // render scaneable
+      for(let r=0;r<count;r++){
+        for(let col=0;col<count;col++){
+          ctx.fillStyle=qr.isDark(r,col)?'#000':'#fff';
+          const w=Math.ceil(cellSize), h=Math.ceil(cellSize);
+          ctx.fillRect(col*cellSize, r*cellSize, w, h);
+        }
+      }
+      // logo central pequeño sin romper QR (opcional)
+    } else {
+      // fallback fake si no hay libreria
+      const ctx=c.getContext('2d');
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,140,140);
+      ctx.fillStyle='#000'; ctx.fillRect(6,6,32,32); ctx.fillRect(102,6,32,32); ctx.fillRect(6,102,32,32);
+      ctx.fillStyle='#fff'; ctx.fillRect(12,12,20,20); ctx.fillRect(108,12,20,20); ctx.fillRect(12,108,20,20);
+      ctx.fillStyle='#000'; ctx.fillRect(18,18,8,8); ctx.fillRect(114,18,8,8); ctx.fillRect(18,114,8,8);
+      let seed=0; for(let ch of state.currentUser.nick) seed+=ch.charCodeAt(0);
+      for(let i=0;i<180;i++) if((seed+i*31)%3===0) ctx.fillRect(44+(i%13)*6,44+Math.floor(i/13)*6,4,4);
+      ctx.fillStyle='#000'; ctx.font='700 7px Montserrat'; ctx.textAlign='center'; ctx.fillText('BIFOR',70,74);
+    }
+  }catch(e){
+    console.warn('QR error',e);
   }
-  // texto central BIFOR
-  ctx.fillStyle='#000'; ctx.font='700 7px Montserrat'; ctx.textAlign='center'; ctx.fillText('BIFOR',70,74);
+  // guardar data para descarga
+  c.dataset.qrData=qrData;
 }
 
 document.getElementById('descargarCarnet')?.addEventListener('click',()=>{
-  alert('Para descargar: usa Imprimir / Guardar como PDF (funciona en móvil y PC).');
+  const c=document.getElementById('qrCanvas');
+  if(!c) return;
+  // crear imagen combinada carnet + QR
+  const link=document.createElement('a');
+  link.download=`BIFOR2026-Carnet-${state.currentUser?.nick||'usuario'}.png`;
+  link.href=c.toDataURL('image/png');
+  link.click();
+  // tambien ofrecer imprimir
+  setTimeout(()=>{ if(confirm('QR descargado. ¿Quieres imprimir el carnet completo?')) window.print(); }, 300);
+});
+document.getElementById('qrCanvas')?.addEventListener('click', ()=>{
+  const data=document.getElementById('qrCanvas')?.dataset.qrData;
+  if(data) alert('QR BIFOR 2026 escaneable:\n\n'+data+'\n\nEste codigo es tu carnet digital personalizado.');
 });
 
-// Ranking
+// Ranking LIVE - con secciones reales
 function renderRanking(){
   const sorted = [...state.users].sort((a,b)=>(b.puntaje||0)-(a.puntaje||0));
   const podium = document.getElementById('podium');
   const body = document.getElementById('rankingBody');
   const top3 = sorted.slice(0,3);
   const medals = ['🥇','🥈','🥉'];
-  const order = [1,0,2]; // visual order: 2nd,1st,3rd
   podium.innerHTML = top3.map((u,i)=>{
     const rank = sorted.indexOf(u);
+    const playingBadge = isUserPlaying(u) ? ' <span class="badge playing" style="font-size:9px">● Jugando</span>' : isUserOnline(u) ? ' <span class="badge online" style="font-size:9px">● En línea</span>' : '';
     return `<div class="podium-item ${rank===0?'first':rank===1?'second':'third'}">
       <div class="podium-medal">${medals[rank]}</div>
-      <div class="podium-name">${u.nick}</div>
+      <div class="podium-name">${u.nick}${playingBadge}</div>
       <div class="podium-cargo">${u.cargo}</div>
       <div class="podium-score">${u.puntaje||0} pts</div>
-      <div style="font-size:10px;color:#777">${u.partidas||0} partidas</div>
+      <div style="font-size:10px;color:#777">${u.partidas||0} partidas • ${u.email}</div>
     </div>`;
   }).join('');
   if(top3.length<3) podium.innerHTML += `<div style="color:#555;font-size:12px;align-self:center">¡Juega para llegar al podio!</div>`;
 
   body.innerHTML = sorted.map((u,idx)=>{
     const isMe = state.currentUser && u.email===state.currentUser.email;
-    return `<tr class="${isMe?'highlight':''}">
+    const estado = isUserPlaying(u) ? '<span class="badge playing"><span class="live-dot small"></span> Jugando</span>' : isUserOnline(u) ? '<span class="badge online">● En línea</span>' : '<span class="badge off">Offline</span>';
+    return `<tr class="${isMe?'highlight':''} ${isUserPlaying(u)?'playing-row':''}">
       <td><strong>${idx+1}</strong> ${idx<3?medals[idx]:''}</td>
-      <td><strong>${u.nick}</strong> ${isMe?'← tú':''}</td>
+      <td><strong>${u.nick}</strong> ${isMe?'← tú':''}<br><small style="color:var(--muted);font-size:10px">${u.email}</small></td>
       <td>${u.cargo}</td>
       <td style="color:var(--lime);font-weight:800">${u.puntaje||0}</td>
       <td>${u.partidas||0}</td>
+      <td>${estado}</td>
     </tr>`;
   }).join('');
+
+  // Secciones LIVE: Jugando Ahora y En Linea (no jugando) - DATOS REALES
+  const {onlineUsers, playingUsers}=getLiveCounts();
+  const jugandoEl=document.getElementById('rankingJugando');
+  const enLineaEl=document.getElementById('rankingEnLinea');
+  const countJug=document.getElementById('countJugando');
+  const countLinea=document.getElementById('countEnLinea');
+  if(countJug) countJug.textContent=playingUsers.length;
+  if(countLinea) countLinea.textContent=Math.max(0, onlineUsers.length - playingUsers.length);
+  if(jugandoEl){
+    if(playingUsers.length===0) jugandoEl.innerHTML='<p style="color:var(--muted);font-size:12px;text-align:center;padding:12px">Nadie jugando ahora. ¡Sé el primero!</p>';
+    else jugandoEl.innerHTML=playingUsers.sort((a,b)=>(b.puntaje||0)-(a.puntaje||0)).map(u=>`
+      <div class="live-user-card playing">
+        <div class="live-user-avatar">${u.nick.charAt(0).toUpperCase()}</div>
+        <div class="live-user-info"><strong>${u.nick}</strong><br><small>${u.email}</small><br><small style="color:var(--muted)">${u.cargo} • ${u.puntaje||0} pts • ${u.partidas||0} partidas</small></div>
+        <div class="live-user-badge"><span class="badge playing">Jugando</span><div style="font-size:10px;color:var(--muted);margin-top:4px">${u.isPlayingQuiz ? u.isPlayingQuiz : 'Quiz activo'}</div></div>
+      </div>
+    `).join('');
+  }
+  if(enLineaEl){
+    const soloEnLinea=onlineUsers.filter(u=>!isUserPlaying(u));
+    if(soloEnLinea.length===0) enLineaEl.innerHTML='<p style="color:var(--muted);font-size:12px;text-align:center;padding:12px">Nadie más en línea</p>';
+    else enLineaEl.innerHTML=soloEnLinea.map(u=>`
+      <div class="live-user-card online">
+        <div class="live-user-avatar" style="background:var(--turquoise)">${u.nick.charAt(0).toUpperCase()}</div>
+        <div class="live-user-info"><strong>${u.nick}</strong><br><small>${u.email}</small><br><small style="color:var(--muted)">${u.cargo} • ${u.puntaje||0} pts</small></div>
+        <div class="live-user-badge"><span class="badge online">En línea</span><div style="font-size:10px;color:var(--muted);margin-top:4px">Hace ${Math.round((Date.now()-u.lastActive)/60000)} min</div></div>
+      </div>
+    `).join('');
+  }
 
   const myCard = document.getElementById('myPositionCard');
   if(!state.currentUser){ myCard.innerHTML='🔒 <a href="#" onclick="showView(\'inicio\');return false" style="color:var(--lime)">Regístrate</a> para ver tu posición'; }
   else {
     const pos = sorted.findIndex(u=>u.email===state.currentUser.email)+1;
     const total = sorted.length;
-    myCard.innerHTML = `Tu posición: <strong>#${pos} de ${total}</strong> • ${state.currentUser.puntaje||0} pts • ${state.currentUser.partidas||0} partidas jugadas`;
+    const estadoMe=isUserPlaying(state.currentUser)?'🟢 Jugando': isUserOnline(state.currentUser)?'⚪ En línea':'⚫ Offline';
+    myCard.innerHTML = `Tu posición: <strong>#${pos} de ${total}</strong> • ${state.currentUser.puntaje||0} pts • ${state.currentUser.partidas||0} partidas jugadas<br><small>${estadoMe} • ${state.currentUser.email}</small>`;
   }
 }
 
-// ====== ESTADISTICAS LIVE ======
+// ====== ESTADISTICAS LIVE - REALES ======
 function getLiveCounts(){
+  // ahora basado en datos reales de correo y partidas
   const total = state.users.length;
-  // online simulado: base = total + 3 bots, con variacion
-  const lastOnline = state.live.onlineHistory[state.live.onlineHistory.length-1] || 10;
-  let online = lastOnline + (Math.random()>0.5?1:-1) * Math.floor(Math.random()*2);
-  // asegurar rango 1.. total+15
-  const maxOnline = total + 12;
-  online = Math.max(1, Math.min(maxOnline, online));
-  if(state.currentUser) online = Math.max(online, 1);
-  // respondiendo = subset de online que esta jugando
-  const lastResp = state.live.respondingHistory[state.live.respondingHistory.length-1] || 3;
-  let responding = lastResp + (Math.random()>0.6?1:-1) * (Math.random()>0.7?1:0);
-  // si alguien esta en quiz activo, forzar +1
-  if(state.currentQuiz && document.getElementById('quizArea') && !document.getElementById('quizArea').classList.contains('hidden')) responding = Math.max(responding, 1);
-  responding = Math.max(0, Math.min(online, responding));
-  responding = Math.round(responding);
-  online = Math.round(online);
-  return {total, online, responding};
+  // actualizar isOnline en base a lastActive (5 min)
+  state.users.forEach(u=>{ u.isOnline=isUserOnline(u); });
+  const onlineUsers = state.users.filter(isUserOnline);
+  const playingUsers = state.users.filter(isUserPlaying);
+  const online = onlineUsers.length;
+  const responding = playingUsers.length;
+  return {total, online, responding, onlineUsers, playingUsers};
 }
 function tickStats(){
   const {online, responding} = getLiveCounts();

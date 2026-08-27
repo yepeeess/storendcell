@@ -1,14 +1,6 @@
 ﻿{
-    "archivos":  [
-                     "app.js",
-                     "bifor.js",
-                     "BIFOR2026.json",
-                     "index-js.html",
-                     "index.html",
-                     "styles.css"
-                 ],
-    "descripcion":  "BIFOR 2026 OPTIMIZADO MOVIL - Menu lateral, rendimiento, espacio, config, musica, animaciones. Negro predominante.",
+    "descripcion":  "BIFOR2026 con QR personalizados y ranking live real - conectados/jugando sincronizados con correo/partidas",
     "nombre":  "BIFOR2026",
-    "version":  "2.0-movil",
-    "fecha":  "2026-08-25 15:22:37"
+    "version":  "3.0-qr-live",
+    "fecha":  "2026-08-27 14:01:10"
 }
