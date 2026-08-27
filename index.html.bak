@@ -45,7 +45,7 @@
     </div>
   </section>
   <section id="view-juegos" class="view"><div class="section-header"><div class="section-title"><h2>Minijuegos BIFOR</h2><p>Elige un quiz. Responde rapido para mas puntos!</p></div><div class="logo-inline">BIFOR 2026</div></div><div id="juegosLista" class="juegos-grid"></div><div id="quizArea" class="hidden"><div class="quiz-header"><button id="salirQuiz" class="btn-small">Volver</button><div class="quiz-progress"><span id="quizProgressText"></span><div class="progress-bar"><div id="progressFill"></div></div></div><div class="quiz-timer" id="quizTimer">15s</div></div><div class="quiz-card"><div class="quiz-watermark">BIFOR 2026</div><h3 id="quizQuestion"></h3><div id="quizOptions" class="options-grid"></div><div id="quizFeedback" class="feedback hidden"></div></div><div class="score-live">Puntaje actual: <strong id="liveScore">0</strong></div></div><div id="quizResult" class="hidden result-card"><div class="result-watermark">BIFOR</div><h3>Quiz Completado!</h3><div class="result-score" id="resultScore"></div><p id="resultMessage"></p><button id="volverJuegos" class="btn-primary">Volver a juegos</button></div></section>
-  <section id="view-carnet" class="view"><div class="section-header"><h2>Carnet Digital de Acceso</h2><div class="logo-inline">BIFOR 2026</div></div><div class="carnet-container"><div class="carnet-card" id="carnetCard"><div class="carnet-header"><div class="carnet-logo"><img src="assets/bifor-color.png" alt="BIFOR" style="height:32px; width:auto;"></div><div class="carnet-badge">ACCESO OFICIAL</div></div><div class="carnet-body"><div class="carnet-avatar" id="carnetAvatar">?</div><div class="carnet-info"><h3 id="carnetNombre">-</h3><p id="carnetCargo" class="carnet-cargo">-</p><p id="carnetEmpresa" class="carnet-empresa">-</p><p id="carnetEmail" class="carnet-email">-</p><div class="carnet-meta"><span>15-17 ABRIL 2026</span><span>MANIZALES, COLOMBIA</span></div></div><div class="carnet-qr"><canvas id="qrCanvas" width="140" height="140"></canvas><small id="qrCode">ID: -</small></div></div><div class="carnet-footer"><span>VALIDO PARA LOS 3 DIAS DEL EVENTO</span><span class="carnet-watermark-inline">BIFOR 2026</span></div></div><div class="carnet-actions"><button class="btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button><button class="btn-outline" id="descargarCarnet">Descargar imagen</button><p class="carnet-hint">Presenta este carnet en el ingreso. El codigo QR sera escaneado en puerta.</p></div></div></section>
+  <section id="view-carnet" class="view"><div class="section-header"><h2>Carnet Digital de Acceso</h2><div class="logo-inline">BIFOR 2026</div></div><div class="carnet-container"><div class="carnet-card" id="carnetCard"><div class="carnet-header"><div class="carnet-logo"><img loading="lazy" src="assets/bifor-color.png" alt="BIFOR" style="height:32px; width:auto;"></div><div class="carnet-badge">ACCESO OFICIAL</div></div><div class="carnet-body"><div class="carnet-avatar" id="carnetAvatar">?</div><div class="carnet-info"><h3 id="carnetNombre">-</h3><p id="carnetCargo" class="carnet-cargo">-</p><p id="carnetEmpresa" class="carnet-empresa">-</p><p id="carnetEmail" class="carnet-email">-</p><div class="carnet-meta"><span>15-17 ABRIL 2026</span><span>MANIZALES, COLOMBIA</span></div></div><div class="carnet-qr"><canvas id="qrCanvas" width="140" height="140"></canvas><small id="qrCode">ID: -</small></div></div><div class="carnet-footer"><span>VALIDO PARA LOS 3 DIAS DEL EVENTO</span><span class="carnet-watermark-inline">BIFOR 2026</span></div></div><div class="carnet-actions"><button class="btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button><button class="btn-outline" id="descargarCarnet">Descargar imagen</button><p class="carnet-hint">Presenta este carnet en el ingreso. El codigo QR sera escaneado en puerta.</p></div></div></section>
   <section id="view-ranking" class="view"><div class="section-header"><div class="section-title"><h2>Ranking LIVE - BIFOR 2026</h2><p>Clasificación en tiempo real + estado de conexión</p></div><div class="logo-inline">BIFOR 2026</div></div><div class="ranking-container"><div class="podium" id="podium"></div>
   <div class="live-sections" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0">
     <div class="card" style="border-color:var(--green-light)"><h3>🟢 Jugando Ahora</h3><p class="card-sub">Respondiendo minijuegos (<span id="countJugando">0</span>)</p><div id="rankingJugando"></div></div>
@@ -77,8 +77,8 @@
   <section id="view-admin" class="view"><div class="section-header"><h2>Panel Administrador - Preguntas</h2><div class="logo-inline">BIFOR 2026</div></div><div class="admin-grid"><div class="card"><h3 id="formTitle">Crear Nuevo Quiz</h3><form id="quizForm"><input type="hidden" id="editQuizId"><div class="input-group"><label>Titulo del Quiz</label><input type="text" id="quizTitle" placeholder="Ej: Innovacion Sostenible" required></div><div class="input-group"><label>Descripcion</label><input type="text" id="quizDesc" placeholder="Breve descripcion"></div><div id="preguntasEditor"></div><button type="button" class="btn-outline btn-small" id="addPregunta">+ Anadir Pregunta</button><div class="form-actions"><button type="submit" class="btn-primary">Guardar Quiz</button><button type="button" class="btn-outline hidden" id="cancelEdit">Cancelar</button></div></form></div><div class="card"><h3>Quizzes Existentes</h3><div id="adminQuizList"></div></div></div><div class="card" style="margin-top:20px"><h3>Usuarios Registrados</h3><div id="adminUsers"></div></div></section>
   <!-- BIFOR LOGOS VISIBLES -->
   <section class="bifor-logos-bar">
-    <img src="assets/bifor-color.png" alt="Bifor Color" class="bifor-logo-img color">
-    <img src="assets/bifor-blanco.png" alt="Bifor Blanco" class="bifor-logo-img blanco">
+    <img loading="lazy" src="assets/bifor-color.png" alt="Bifor Color" class="bifor-logo-img color">
+    <img loading="lazy" src="assets/bifor-blanco.png" alt="Bifor Blanco" class="bifor-logo-img blanco">
   </section>
   <section id="view-config" class="view">
     <div class="section-header"><div class="section-title"><h2>Configuración</h2><p>Personaliza tu experiencia BIFOR 2026</p></div><div class="logo-inline">BIFOR 2026</div></div>
@@ -111,7 +111,7 @@
 <!-- MENU LATERAL MOVIL -->
 <div id="sideOverlay" class="side-overlay hidden"></div>
 <nav id="sideMenu" class="side-menu" aria-hidden="true">
-  <div class="side-header"><div class="side-logo"><img src="assets/bifor-blanco.png" alt="BIFOR" style="height:28px; width:auto;"></div><button id="sideClose" class="btn-icon" aria-label="Cerrar">✕</button></div>
+  <div class="side-header"><div class="side-logo"><img loading="lazy" src="assets/bifor-blanco.png" alt="BIFOR" style="height:28px; width:auto;"></div><button id="sideClose" class="btn-icon" aria-label="Cerrar">✕</button></div>
   <div class="side-nav">
     <button class="side-link active" data-view="inicio">Inicio</button>
     <button class="side-link" data-view="juegos">Minijuegos</button>
@@ -143,23 +143,22 @@
 <audio id="bgMusic" loop preload="auto" crossorigin="anonymous"></audio>
 <!-- MARCA DE AGUA BIFOR ABAJO -->
 <div id="biforWatermark" class="bifor-watermark">
-  <img src="assets/bifor-blanco.png" alt="Bifor Watermark" class="watermark-img">
-  <img src="assets/bifor-color.png" alt="Bifor Watermark Color" class="watermark-img color">
+  <img loading="lazy" src="assets/bifor-blanco.png" alt="Bifor Watermark" class="watermark-img">
+  <img loading="lazy" src="assets/bifor-color.png" alt="Bifor Watermark Color" class="watermark-img color">
 </div>
 <!-- PATROCINADORES -->
 <section class="sponsors-section">
   <h3>Patrocinadores Oficiales</h3>
   <p class="sponsors-sub">BIFOR 2026 es posible gracias a nuestros aliados</p>
   <div class="sponsors-grid" style="grid-template-columns:repeat(2, 1fr); max-width:700px; margin:0 auto;">
-    <div class="sponsor-card"><img src="assets/camara-color.png" alt="Cámara de Comercio de Manizales por Caldas" class="sponsor-img"><p class="sponsor-name">Cámara de Comercio<br>de Manizales por Caldas</p></div>
-    <div class="sponsor-card neuro"><img src="assets/neurocity-color.png" alt="NeuroCity" class="sponsor-img"><p class="sponsor-name">NeuroCity<br><small>Laboratorio de Creatividad e Innovación</small></p></div>
+    <div class="sponsor-card"><img loading="lazy" src="assets/camara-color.png" alt="Cámara de Comercio de Manizales por Caldas" class="sponsor-img"><p class="sponsor-name">Cámara de Comercio<br>de Manizales por Caldas</p></div>
+    <div class="sponsor-card neuro"><img loading="lazy" src="assets/neurocity-color.png" alt="NeuroCity" class="sponsor-img"><p class="sponsor-name">NeuroCity<br><small>Laboratorio de Creatividad e Innovación</small></p></div>
   </div>
 </section>
 <footer class="footer"><span>BIFOR 2026 | Innovacion que Transforma | 15-17 Abril | Manizales, Colombia</span><span class="footer-logo">BIFOR 2026</span></footer>
 <script src="qrcode.js"></script><script src="app.js"></script>
 </body>
 </html>
-
 
 
 

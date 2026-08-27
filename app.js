@@ -1,4 +1,5 @@
-﻿/* BIFOR 2026 App */
+﻿console.log('BIFOR2026 app loaded - Desktop/BIFOR2026');
+/* BIFOR 2026 App */
 const STORAGE_KEY = 'bifor_data_v2';
 
 let state = {
@@ -53,8 +54,13 @@ const defaultQuizzes = [
 ];
 
 const defaultUsers = [
-  { nick:'storend', email:'storend@gmail.com', password:'admin123', cargo:'Administrador', empresa:'storend', puntaje:0, partidas:0 },
-
+  { nick:'storend', email:'storend@gmail.com', password:'admin123', cargo:'Administrador', empresa:'storend', puntaje:0, partidas:0, lastActive: Date.now(), isOnline:true, isPlaying:false },
+  { nick:'Admin', email:'admin@bifor.com', password:'admin123', cargo:'Administrador', empresa:'BIFOR', puntaje:0, partidas:0, lastActive: Date.now(), isOnline:true, isPlaying:false },
+  { nick:'Demo', email:'demo@bifor.com', password:'demo123', cargo:'Visitante', empresa:'Demo Corp', puntaje:0, partidas:0, lastActive: Date.now()-60000, isOnline:true, isPlaying:false },
+  { nick:'LauraInnov', email:'laura@bifor.com', password:'x', cargo:'Expositor', empresa:'EcoTech', puntaje:1850, partidas:5, lastActive: Date.now()-120000, isOnline:true, isPlaying:true },
+  { nick:'CarlosCafe', email:'carlos@bifor.com', password:'x', cargo:'Patrocinador', empresa:'Cafe Andino', puntaje:1420, partidas:4, lastActive: Date.now()-180000, isOnline:true, isPlaying:false },
+  { nick:'Sofi2026', email:'sofi@bifor.com', password:'x', cargo:'Estudiante', empresa:'U. Manizales', puntaje:980, partidas:3, lastActive: Date.now()-240000, isOnline:false, isPlaying:false },
+];
 
 function isUserOnline(u){
   if(!u.lastActive) return false;
