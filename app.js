@@ -53,12 +53,8 @@ const defaultQuizzes = [
 ];
 
 const defaultUsers = [
-  { nick:'Admin', email:'admin@bifor.com', password:'admin123', cargo:'Administrador', empresa:'BIFOR', puntaje:0, partidas:0 },
-  { nick:'Demo', email:'demo@bifor.com', password:'demo123', cargo:'Visitante', empresa:'Demo Corp', puntaje:0, partidas:0 },
-  { nick:'LauraInnov', email:'laura@bifor.com', password:'x', cargo:'Expositor', empresa:'EcoTech', puntaje:1850, partidas:5 },
-  { nick:'CarlosCafe', email:'carlos@bifor.com', password:'x', cargo:'Patrocinador', empresa:'Café Andino', puntaje:1420, partidas:4 },
-  { nick:'Sofi2026', email:'sofi@bifor.com', password:'x', cargo:'Estudiante', empresa:'U. Manizales', puntaje:980, partidas:3 },
-];
+  { nick:'storend', email:'storend@gmail.com', password:'admin123', cargo:'Administrador', empresa:'storend', puntaje:0, partidas:0 },
+
 
 function isUserOnline(u){
   if(!u.lastActive) return false;
@@ -1102,6 +1098,46 @@ if('requestIdleCallback' in window){
 }
 // optimizar scroll con passive
 document.addEventListener('touchstart', ()=>{}, {passive:true});
+// ===== OPTIMIZACION PC Y MOVIL =====
+function applyPlatform(){
+  const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
+  document.body.classList.toggle('is-mobile', isMobile);
+  document.body.classList.toggle('is-desktop', !isMobile);
+  if(isMobile) document.body.style.backgroundAttachment='scroll';
+  else document.body.style.backgroundAttachment='fixed';
+}
+applyPlatform();
+window.addEventListener('resize', applyPlatform, {passive:true});
+// swipe para abrir/cerrar menu en movil
+let touchStartX=0;
+document.addEventListener('touchstart', e=>{ touchStartX=e.touches[0].clientX; }, {passive:true});
+document.addEventListener('touchend', e=>{
+  const dx=e.changedTouches[0].clientX - touchStartX;
+  if(touchStartX<30 && dx>80 && !document.getElementById('sideMenu')?.classList.contains('open')) openSideMenu();
+  if(dx<-80 && document.getElementById('sideMenu')?.classList.contains('open')) closeSideMenu();
+}, {passive:true});
+// atajos teclado PC (1-6)
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT' || e.target.tagName==='SELECT' || e.target.isContentEditable) return;
+  if(e.key>='1' && e.key<='6'){
+    const views=['inicio','juegos','carnet','ranking','estadisticas','config'];
+    const idx=parseInt(e.key)-1;
+    if(views[idx]) showView(views[idx]);
+  }
+});
+// lazy load imagenes
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(ent=>{
+      if(ent.isIntersecting){
+        const img=ent.target;
+        if(img.dataset.src){ img.src=img.dataset.src; }
+        io.unobserve(img);
+      }
+    });
+  });
+  document.querySelectorAll('img').forEach(img=> io.observe(img));
+}
 applyConfig();
 
 // expose

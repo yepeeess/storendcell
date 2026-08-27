@@ -1,7 +1,4 @@
-﻿/* BIFOR 2026 - APP 100% JAVASCRIPT
-   Este archivo crea TODA la interfaz desde JavaScript (sin HTML estatico).
-   Uso: crear un HTML minimo que solo cargue este script y styles.css
-   El logo BIFOR 2026 queda fijo en la esquina derecha via JS+CSS.
+﻿/*
 */
 (() => {
   const STORAGE_KEY = 'bifor_data_v2';
@@ -25,11 +22,8 @@
     ]}
   ];
   const defaultUsers = [
-    { nick:'Admin', email:'admin@bifor.com', password:'admin123', cargo:'Administrador', empresa:'BIFOR', puntaje:0, partidas:0 },
-    { nick:'Demo', email:'demo@bifor.com', password:'demo123', cargo:'Visitante', empresa:'Demo Corp', puntaje:0, partidas:0 },
-    { nick:'LauraInnov', email:'laura@bifor.com', password:'x', cargo:'Expositor', empresa:'EcoTech', puntaje:1850, partidas:5 },
-    { nick:'CarlosCafe', email:'carlos@bifor.com', password:'x', cargo:'Patrocinador', empresa:'Cafe Andino', puntaje:1420, partidas:4 },
-    { nick:'Sofi2026', email:'sofi@bifor.com', password:'x', cargo:'Estudiante', empresa:'U. Manizales', puntaje:980, partidas:3 },
+    { nick:'Storend', email:'admin@storend.com', password:'admin123', cargo:'Administrador', empresa:'Storend', puntaje:0, partidas:0 },
+    
   ];
   function load(){ const raw=localStorage.getItem(STORAGE_KEY); if(raw){ try{ const p=JSON.parse(raw); state.users=p.users||defaultUsers; state.quizzes=p.quizzes||defaultQuizzes; state.currentUser=p.currentUser||null; }catch{ initDefaults(); } } else initDefaults(); if(!state.quizzes.length) state.quizzes=defaultQuizzes; if(!state.users.length) state.users=defaultUsers; }
   function initDefaults(){ state.users=JSON.parse(JSON.stringify(defaultUsers)); state.quizzes=JSON.parse(JSON.stringify(defaultQuizzes)); }
